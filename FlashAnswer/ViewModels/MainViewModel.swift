@@ -18,7 +18,7 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     let bank = QuestionBank()
     private let speech = SpeechRecognitionService()
     private let audio = AudioSessionService()
-    private var autoRestartTimer: Timer?
+    private var restartTimer: Timer?
 
     override init() {
         super.init()
@@ -88,7 +88,8 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
         statusText = "已停止"
         speech.stopListening()
         audio.stop()
-        autoRestartTimer?.invalidate()
+        restartTimer?.invalidate()
+        restartTimer = nil
     }
 
     // MARK: - SpeechRecognitionDelegate
@@ -105,6 +106,7 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
                 NotificationService.shared.sendNoMatch(recognizedText: text)
             }
 
+            // 出答案后立即开始下一轮监听
             if self.isListening {
                 self.scheduleAutoRestart()
             }
@@ -115,24 +117,27 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             if self.isListening {
-                self.speech.startListening()
+                // 失败后短暂延迟再重启，避免频繁重试
+                self.scheduleAutoRestart()
             }
         }
     }
 
-    // MARK: - Auto restart
+    // MARK: - Auto restart (出答案后立即下一轮)
 
     private func scheduleAutoRestart() {
-        autoRestartTimer?.invalidate()
-        autoRestartTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: false) { [weak self] _ in
+        restartTimer?.invalidate()
+        // 延迟1秒让通知先发出去，然后立即开始下一轮
+        restartTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
             guard let self, self.isListening else { return }
             self.statusText = "监听中..."
+            self.state = .idle
             self.speech.startListening()
         }
     }
 
     func restartNow() {
-        autoRestartTimer?.invalidate()
+        restartTimer?.invalidate()
         guard isListening else { return }
         statusText = "监听中..."
         state = .idle
