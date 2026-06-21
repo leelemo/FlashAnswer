@@ -1,0 +1,74 @@
+name: Build FlashAnswer iOS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Resolve Swift Package dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project FlashAnswer.xcodeproj \
+            -scheme FlashAnswer
+
+      - name: Build for simulator (syntax check)
+        run: |
+          xcodebuild build \
+            -project FlashAnswer.xcodeproj \
+            -scheme FlashAnswer \
+            -destination "platform=iOS Simulator,name=iPhone 15,OS=latest" \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || true
+
+      - name: Archive (unsigned, for AltStore sideloading)
+        run: |
+          xcodebuild archive \
+            -project FlashAnswer.xcodeproj \
+            -scheme FlashAnswer \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/FlashAnswer.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Export .ipa (ad-hoc unsigned)
+        run: |
+          mkdir -p "$RUNNER_TEMP/ipa"
+          # Pack the .app from the archive into an .ipa manually (no provisioning needed for AltStore)
+          APP_PATH=$(find "$RUNNER_TEMP/FlashAnswer.xcarchive/Products" -name "*.app" | head -1)
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -r "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/"
+          cd "$RUNNER_TEMP/ipa"
+          zip -r FlashAnswer.ipa Payload
+
+      - name: Upload .ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlashAnswer-ipa
+          path: ${{ runner.temp }}/ipa/FlashAnswer.ipa
+          retention-days: 30
+
+      - name: Upload .xcarchive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlashAnswer-xcarchive
+          path: ${{ runner.temp }}/FlashAnswer.xcarchive
+          retention-days: 7
