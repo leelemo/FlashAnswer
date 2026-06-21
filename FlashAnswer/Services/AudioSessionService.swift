@@ -15,7 +15,7 @@ class AudioSessionService {
         let sampleRate = 44100
         let duration = 0.1
         let numSamples = Int(Double(sampleRate) * duration)
-        var silentData = Data(count: numSamples * 2) // 16-bit = 2 bytes per sample
+        let silentData = Data(count: numSamples * 2) // 16-bit = 2 bytes per sample
 
         // WAV header (44 bytes)
         var wav = Data()

@@ -91,7 +91,7 @@ struct ContentView: View {
                     Image(systemName: "ear")
                         .font(.system(size: 48))
                         .foregroundStyle(.secondary)
-                    Text("点击"开始监听"")
+                    Text("点击开始监听")
                         .font(.headline)
                         .foregroundStyle(.secondary)
                 }
