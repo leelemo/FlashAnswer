@@ -8,11 +8,11 @@ class ExcelParserService {
         case emptyFile
     }
 
-    /// Parse an xlsx file, expecting:
-    /// Column A: question text
-    /// Column B: options
-    /// Column C: answer
-    /// Row 1 is treated as header and skipped.
+    /// 解析 xlsx 文件
+    /// A列：题型（单选/多选/判断/填空等）
+    /// B列：题干
+    /// C列：答案
+    /// 第一行为表头，自动跳过
     static func parse(url: URL) throws -> [Question] {
         guard let file = XLSXFile(filepath: url.path) else { throw ParseError.cannotOpen }
         guard let worksheet = try file.parseWorksheetPaths().first,
@@ -33,12 +33,12 @@ class ExcelParserService {
                 return cell.value ?? ""
             }
 
-            let text = cellValue("A").trimmingCharacters(in: .whitespacesAndNewlines)
-            let options = cellValue("B").trimmingCharacters(in: .whitespacesAndNewlines)
+            let type = cellValue("A").trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = cellValue("B").trimmingCharacters(in: .whitespacesAndNewlines)
             let answer = cellValue("C").trimmingCharacters(in: .whitespacesAndNewlines)
 
             guard !text.isEmpty, !answer.isEmpty else { continue }
-            questions.append(Question(text: text, options: options, answer: answer))
+            questions.append(Question(type: type, text: text, answer: answer))
         }
 
         if questions.isEmpty { throw ParseError.emptyFile }

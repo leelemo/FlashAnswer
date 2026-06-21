@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @StateObject private var vm = MainViewModel()
     @State private var showFilePicker = false
+    @State private var showClearConfirm = false
 
     var body: some View {
         NavigationStack {
@@ -12,6 +13,23 @@ struct ContentView: View {
                 statusCard
 
                 Spacer()
+
+                // Question bank info + clear button
+                if !vm.bank.questions.isEmpty {
+                    HStack {
+                        Text("题库：\(vm.bank.questions.count) 道题")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button(role: .destructive) {
+                            showClearConfirm = true
+                        } label: {
+                            Label("清空题库", systemImage: "trash")
+                                .font(.caption)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
 
                 // Action buttons
                 HStack(spacing: 16) {
@@ -44,16 +62,9 @@ struct ContentView: View {
                 }
                 .padding(.horizontal)
 
-                // Question bank info
-                if !vm.bank.questions.isEmpty {
-                    Text("题库共 \(vm.bank.questions.count) 道题")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
                 // Restart button (visible after result)
                 if vm.isListening {
-                    Button("立即重听") { vm.restartNow() }
+                    Button("立即重新监听") { vm.restartNow() }
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -71,6 +82,12 @@ struct ContentView: View {
                     vm.state = .error(err.localizedDescription)
                 }
             }
+            .alert("清空题库", isPresented: $showClearConfirm) {
+                Button("取消", role: .cancel) {}
+                Button("清空", role: .destructive) { vm.clearBank() }
+            } message: {
+                Text("确定要清空所有题库吗？此操作不可撤销。")
+            }
             .onAppear { vm.requestPermissions() }
         }
     }
@@ -85,7 +102,7 @@ struct ContentView: View {
                         .font(.system(size: 48))
                         .foregroundStyle(.green)
                         .symbolEffect(.variableColor.iterative)
-                    Text("正在聆听...")
+                    Text("监听中...")
                         .font(.headline)
                 } else {
                     Image(systemName: "ear")
@@ -96,32 +113,45 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
 
-            case .matched(let question, let score):
+            case .listening:
+                Image(systemName: "waveform")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.green)
+                    .symbolEffect(.variableColor.iterative)
+                Text("监听中...")
+                    .font(.headline)
+
+            case .matched(let results):
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 48))
                     .foregroundStyle(.green)
-                Text("匹配成功（置信度 \(Int(score * 100))%）")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(question.text)
-                    .font(.subheadline)
-                    .multilineTextAlignment(.center)
-                if !question.options.isEmpty {
-                    Text(question.options)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                Text("匹配到 \(results.count) 道题")
+                    .font(.headline)
+                ForEach(Array(results.prefix(3).enumerated()), id: \.offset) { _, result in
+                    VStack(spacing: 4) {
+                        Text("【\(result.question.type)】答案：\(result.question.answer)")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.green)
+                        Text(result.question.text)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                    }
+                    .padding(.top, 4)
                 }
-                Text("答案：\(question.answer)")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.green)
+                if results.count > 3 {
+                    Text("还有 \(results.count - 3) 道题，查看通知栏")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
 
             case .noMatch(let text):
                 Image(systemName: "questionmark.circle")
                     .font(.system(size: 48))
                     .foregroundStyle(.orange)
-                Text("未找到匹配题目")
+                Text("未匹配到题目")
                     .font(.headline)
                 Text("识别到：\(text)")
                     .font(.caption)

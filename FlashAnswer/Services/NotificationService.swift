@@ -10,17 +10,25 @@ class NotificationService {
         }
     }
 
-    func sendAnswer(question: String, answer: String, options: String) {
-        let content = UNMutableNotificationContent()
-        content.title = "已找到答案"
-        content.body = options.isEmpty
-            ? "答案：\(answer)"
-            : "\(options)\n答案：\(answer)"
-        content.sound = .default
+    /// 推送匹配到的题目答案，每道题一条通知
+    func sendMatchedAnswers(results: [QuestionBank.MatchResult]) {
+        for (i, result) in results.enumerated() {
+            let q = result.question
+            let content = UNMutableNotificationContent()
+            content.title = "【\(q.type)】答案：\(q.answer)"
+            content.body = q.text
+            content.sound = .default
+            content.userInfo = ["index": i, "total": results.count]
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request)
+            // 间隔 0.1s 发送，避免通知被覆盖
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1 + Double(i) * 0.1, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: "FlashAnswer-\(UUID().uuidString)",
+                content: content,
+                trigger: trigger
+            )
+            UNUserNotificationCenter.current().add(request)
+        }
     }
 
     func sendNoMatch(recognizedText: String) {

@@ -4,7 +4,7 @@ import Combine
 enum AppState {
     case idle
     case listening
-    case matched(question: Question, score: Double)
+    case matched(results: [QuestionBank.MatchResult])
     case noMatch(text: String)
     case error(String)
 }
@@ -53,6 +53,14 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
         }
     }
 
+    // MARK: - Clear bank
+
+    func clearBank() {
+        bank.clearAll()
+        statusText = "题库已清空"
+        state = .idle
+    }
+
     // MARK: - Listening control
 
     func toggleListening() {
@@ -88,13 +96,10 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     func didRecognize(text: String) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            if let result = self.bank.match(recognizedText: text) {
-                self.state = .matched(question: result.question, score: result.score)
-                NotificationService.shared.sendAnswer(
-                    question: result.question.text,
-                    answer: result.question.answer,
-                    options: result.question.options
-                )
+            let results = self.bank.match(recognizedText: text)
+            if !results.isEmpty {
+                self.state = .matched(results: results)
+                NotificationService.shared.sendMatchedAnswers(results: results)
             } else {
                 self.state = .noMatch(text: text)
                 NotificationService.shared.sendNoMatch(recognizedText: text)
@@ -109,7 +114,6 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     func didFail(error: Error) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            // Restart on transient errors
             if self.isListening {
                 self.speech.startListening()
             }
