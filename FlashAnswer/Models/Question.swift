@@ -13,15 +13,23 @@ struct Question: Codable, Identifiable {
         self.type = type
         self.text = text
         self.answer = answer
-        self.normalizedText = Question.normalize(text)
-        self.pinyin = PinyinConverter.convert(text)
+        let cleaned = Question.cleanText(text)
+        self.normalizedText = cleaned.lowercased()
+        self.pinyin = PinyinConverter.convert(cleaned)
+    }
+
+    /// 去掉所有标点符号（中英文），只保留汉字、字母、数字、空格
+    static func cleanText(_ s: String) -> String {
+        let allowed = CharacterSet.letters.union(.decimalDigits).union(.whitespaces)
+        return s.unicodeScalars.filter { allowed.contains($0) }
+            .map { String($0) }
+            .joined()
+            .replacingOccurrences(of: "  ", with: " ")
+            .trimmingCharacters(in: .whitespaces)
     }
 
     static func normalize(_ s: String) -> String {
-        s.lowercased()
-            .components(separatedBy: CharacterSet.punctuationCharacters.union(.symbols))
-            .joined()
-            .trimmingCharacters(in: .whitespaces)
+        return cleanText(s).lowercased()
     }
 }
 

@@ -59,7 +59,9 @@ class QuestionBank: ObservableObject {
     /// 完整匹配流程：题型识别 → 滑动窗口拼音编辑距离
     /// 返回所有编辑距离 ≤3 的命中，按距离升序排列
     func match(recognizedText: String) -> [MatchResult] {
-        let recognizedPinyin = PinyinConverter.convert(recognizedText)
+        // 先去掉识别文本中的标点符号，再转拼音
+        let cleanedText = Question.cleanText(recognizedText)
+        let recognizedPinyin = PinyinConverter.convert(cleanedText)
             .components(separatedBy: .whitespaces).joined()
 
         guard !recognizedPinyin.isEmpty else { return [] }
