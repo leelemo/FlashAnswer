@@ -7,20 +7,22 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-14
     timeout-minutes: 60
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+      - name: Select Xcode 15
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          xcodebuild -version
 
-      - name: Show Xcode version
-        run: xcodebuild -version
+      - name: Show available SDKs
+        run: xcodebuild -showsdks
 
-      - name: List available schemes (debug)
+      - name: List available schemes
         run: xcodebuild -project FlashAnswer.xcodeproj -list
 
       - name: Resolve Swift Package dependencies
