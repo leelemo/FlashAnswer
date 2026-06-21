@@ -7,18 +7,6 @@ class QuestionBank: ObservableObject {
     // 倒排索引：拼音 token -> [question index]
     private var invertedIndex: [String: Set<Int>] = [:]
 
-    // 题型关键词 → 拼音
-    private static let typeKeywords: [(type: String, pinyin: String)] = [
-        ("单选", "danxuan"),
-        ("单项选择", "danxiangxuanze"),
-        ("多选", "duoxuan"),
-        ("多项选择", "duoxiangxuanze"),
-        ("判断", "panduan"),
-        ("填空", "tiankong"),
-        ("简答", "jianda"),
-        ("论述", "lunshu"),
-    ]
-
     private let saveURL: URL = {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return docs.appendingPathComponent("question_bank.json")
@@ -56,7 +44,7 @@ class QuestionBank: ObservableObject {
         let editDistance: Int
     }
 
-    /// 完整匹配流程：题型识别 → 滑动窗口拼音编辑距离
+    /// 匹配流程：倒排索引粗筛 → 滑动窗口拼音编辑距离
     /// 返回所有编辑距离 ≤3 的命中，按距离升序排列
     func match(recognizedText: String) -> [MatchResult] {
         // 先去掉识别文本中的标点符号，再转拼音
@@ -66,29 +54,17 @@ class QuestionBank: ObservableObject {
 
         guard !recognizedPinyin.isEmpty else { return [] }
 
-        // 第一层：题型识别
-        let detectedType = detectType(from: recognizedPinyin)
-
-        // 粗筛候选集
-        var candidateIndices: Set<Int>
-        if let type = detectedType {
-            candidateIndices = Set(questions.indices.filter { questions[$0].type == type })
-            if candidateIndices.isEmpty {
-                candidateIndices = Set(questions.indices)
-            }
-        } else {
-            // 倒排索引粗筛
-            candidateIndices = Set<Int>()
-            let tokens = tokenizePinyin(recognizedPinyin)
-            for token in tokens {
-                if let hits = invertedIndex[token] { candidateIndices.formUnion(hits) }
-            }
-            if candidateIndices.isEmpty {
-                candidateIndices = Set(questions.indices)
-            }
+        // 倒排索引粗筛候选集
+        var candidateIndices = Set<Int>()
+        let tokens = tokenizePinyin(recognizedPinyin)
+        for token in tokens {
+            if let hits = invertedIndex[token] { candidateIndices.formUnion(hits) }
+        }
+        if candidateIndices.isEmpty {
+            candidateIndices = Set(questions.indices)
         }
 
-        // 第二层：滑动窗口拼音编辑距离
+        // 滑动窗口拼音编辑距离
         var results: [MatchResult] = []
         let recognizedSyllables = syllables(from: recognizedPinyin)
 
@@ -109,25 +85,6 @@ class QuestionBank: ObservableObject {
 
         results.sort { $0.editDistance < $1.editDistance }
         return results
-    }
-
-    // MARK: - 题型识别
-
-    private func detectType(from pinyin: String) -> String? {
-        for (type, keywordPinyin) in QuestionBank.typeKeywords {
-            // 题型关键词通常很短（2-4个音节），编辑距离 ≤1 算匹配
-            if pinyin.contains(keywordPinyin) {
-                return type
-            }
-            // 模糊匹配：检查拼音中是否有编辑距离 ≤1 的子串
-            let kwSyllables = syllables(from: keywordPinyin)
-            let textSyllables = syllables(from: pinyin)
-            let minDist = slidingWindowMinDistance(pattern: kwSyllables, text: textSyllables)
-            if minDist <= 1 {
-                return type
-            }
-        }
-        return nil
     }
 
     // MARK: - 滑动窗口编辑距离
