@@ -10,6 +10,18 @@ class NotificationService {
         }
     }
 
+    /// 题型切换通知
+    func sendTypeSwitched(type: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "题型已切换"
+        content.body = "当前题型：\(type)"
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
+    }
+
     /// 推送匹配到的题目答案，每道题一条通知
     func sendMatchedAnswers(results: [QuestionBank.MatchResult]) {
         for (i, result) in results.enumerated() {
@@ -20,7 +32,6 @@ class NotificationService {
             content.sound = .default
             content.userInfo = ["index": i, "total": results.count]
 
-            // 间隔 0.1s 发送，避免通知被覆盖
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1 + Double(i) * 0.1, repeats: false)
             let request = UNNotificationRequest(
                 identifier: "FlashAnswer-\(UUID().uuidString)",

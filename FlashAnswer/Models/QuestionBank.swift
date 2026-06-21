@@ -44,24 +44,35 @@ class QuestionBank: ObservableObject {
         let editDistance: Int
     }
 
-    /// 匹配流程：倒排索引粗筛 → 滑动窗口拼音编辑距离
-    /// 返回所有编辑距离 ≤3 的命中，按距离升序排列
-    func match(recognizedText: String) -> [MatchResult] {
-        // 先去掉识别文本中的标点符号，再转拼音
+    /// 匹配流程：倒排索引粗筛 → 按题型过滤 → 滑动窗口拼音编辑距离
+    /// typeFilter: 非 nil 时只匹配该类型的题目
+    func match(recognizedText: String, typeFilter: String? = nil) -> [MatchResult] {
         let cleanedText = Question.cleanText(recognizedText)
         let recognizedPinyin = PinyinConverter.convert(cleanedText)
             .components(separatedBy: .whitespaces).joined()
 
         guard !recognizedPinyin.isEmpty else { return [] }
 
-        // 倒排索引粗筛候选集
+        // 倒排索引粗筛
         var candidateIndices = Set<Int>()
         let tokens = tokenizePinyin(recognizedPinyin)
         for token in tokens {
             if let hits = invertedIndex[token] { candidateIndices.formUnion(hits) }
         }
+        // 粗筛为空时退化为全库搜索
         if candidateIndices.isEmpty {
             candidateIndices = Set(questions.indices)
+        }
+
+        // 按题型过滤
+        if let typeFilter = typeFilter {
+            let typeFiltered = candidateIndices.filter { questions[$0].type == typeFilter }
+            if !typeFiltered.isEmpty {
+                candidateIndices = Set(typeFiltered)
+            } else {
+                // 粗筛结果中没有该题型，退化为全库该题型
+                candidateIndices = Set(questions.indices.filter { questions[$0].type == typeFilter })
+            }
         }
 
         // 滑动窗口拼音编辑距离
@@ -89,12 +100,10 @@ class QuestionBank: ObservableObject {
 
     // MARK: - 滑动窗口编辑距离
 
-    /// 在 text 上滑动窗口，找与 pattern 最小编辑距离
     private func slidingWindowMinDistance(pattern: [String], text: [String]) -> Int {
         if pattern.isEmpty { return text.count }
         if text.isEmpty { return pattern.count }
 
-        // 如果 pattern 比 text 长，直接算整体编辑距离
         if pattern.count > text.count {
             return editDistance(pattern, text)
         }
@@ -107,7 +116,7 @@ class QuestionBank: ObservableObject {
             let dist = editDistance(pattern, window)
             if dist < minDist {
                 minDist = dist
-                if minDist == 0 { break } // 完美匹配，提前退出
+                if minDist == 0 { break }
             }
         }
 
@@ -116,18 +125,13 @@ class QuestionBank: ObservableObject {
 
     // MARK: - 拼音音节切分
 
-    /// 将连续拼音字符串切成音节数组
-    /// 如 "zaiyuangongzuo" → ["zai", "yuan", "gong", "zuo"]
     private func syllables(from pinyin: String) -> [String] {
-        // 简单策略：按空格切分（CFStringTransform 会加空格）
         let parts = pinyin.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
         if parts.count > 1 { return parts }
 
-        // 如果没有空格，用声母韵母规则切分
         return splitPinyinSyllables(pinyin)
     }
 
-    /// 按拼音声母切分连续拼音
     private func splitPinyinSyllables(_ s: String) -> [String] {
         let initials = ["zh", "ch", "sh", "b", "p", "m", "f", "d", "t",
                         "n", "l", "g", "k", "h", "j", "q", "x", "r",
@@ -142,7 +146,6 @@ class QuestionBank: ObservableObject {
                 current.append(chars[i])
                 i += 1
             } else {
-                // 尝试匹配 2 字母声母
                 if i + 1 <= chars.count {
                     let twoChar = String(chars[i]) + (i + 1 < chars.count ? String(chars[i + 1]) : "")
                     let oneChar = String(chars[i])
@@ -202,7 +205,6 @@ class QuestionBank: ObservableObject {
 
     private func tokenizePinyin(_ s: String) -> [String] {
         let syllableArray = syllables(from: s)
-        // 用 2-gram 做倒排索引 token
         var tokens: [String] = []
         for i in 0..<max(0, syllableArray.count - 1) {
             tokens.append(syllableArray[i] + syllableArray[i+1])

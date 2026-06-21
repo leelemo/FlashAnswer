@@ -15,10 +15,20 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     @Published var statusText = "就绪"
     @Published var permissionsGranted = false
 
+    /// 当前题型，默认单选题，跨监听轮次保持
+    @Published var currentType = "单选题"
+
     let bank = QuestionBank()
     private let speech = SpeechRecognitionService()
     private let audio = AudioSessionService()
     private var restartTimer: Timer?
+
+    /// 题型切换关键词
+    private static let typeKeywords: [(display: String, keywords: [String])] = [
+        ("单选题", ["单选", "单选题"]),
+        ("多选题", ["多选", "多选题"]),
+        ("判断题", ["判断", "判断题"]),
+    ]
 
     override init() {
         super.init()
@@ -78,7 +88,7 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
         }
         audio.startBackgroundAudio()
         isListening = true
-        statusText = "监听中..."
+        statusText = "监听中...（当前题型：\(currentType)）"
         state = .idle
         speech.startListening()
     }
@@ -97,7 +107,9 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     func didRecognize(text: String) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            let results = self.bank.match(recognizedText: text)
+
+            // 匹配时按当前题型过滤
+            let results = self.bank.match(recognizedText: text, typeFilter: self.currentType)
             if !results.isEmpty {
                 self.state = .matched(results: results)
                 NotificationService.shared.sendMatchedAnswers(results: results)
@@ -106,7 +118,21 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
                 NotificationService.shared.sendNoMatch(recognizedText: text)
             }
 
-            // 出答案后立即开始下一轮监听
+            if self.isListening {
+                self.scheduleAutoRestart()
+            }
+        }
+    }
+
+    /// 题型切换指令
+    func didSwitchType(type: String) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.currentType = type
+            self.statusText = "当前题型：\(type)"
+            NotificationService.shared.sendTypeSwitched(type: type)
+
+            // 切换后自动开始下一轮监听
             if self.isListening {
                 self.scheduleAutoRestart()
             }
@@ -117,20 +143,18 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             if self.isListening {
-                // 失败后短暂延迟再重启，避免频繁重试
                 self.scheduleAutoRestart()
             }
         }
     }
 
-    // MARK: - Auto restart (出答案后立即下一轮)
+    // MARK: - Auto restart
 
     private func scheduleAutoRestart() {
         restartTimer?.invalidate()
-        // 延迟1秒让通知先发出去，然后立即开始下一轮
         restartTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
             guard let self, self.isListening else { return }
-            self.statusText = "监听中..."
+            self.statusText = "监听中...（当前题型：\(self.currentType)）"
             self.state = .idle
             self.speech.startListening()
         }
@@ -139,7 +163,7 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     func restartNow() {
         restartTimer?.invalidate()
         guard isListening else { return }
-        statusText = "监听中..."
+        statusText = "监听中...（当前题型：\(currentType)）"
         state = .idle
         speech.startListening()
     }

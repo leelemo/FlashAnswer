@@ -3,8 +3,16 @@ import AVFoundation
 
 protocol SpeechRecognitionDelegate: AnyObject {
     func didRecognize(text: String)
+    func didSwitchType(type: String)
     func didFail(error: Error)
 }
+
+// 题型切换关键词
+private let typeSwitchKeywords: [(type: String, keywords: [String])] = [
+    ("单选题", ["单选", "单选题"]),
+    ("多选题", ["多选", "多选题"]),
+    ("判断题", ["判断", "判断题"]),
+]
 
 class SpeechRecognitionService: NSObject {
     weak var delegate: SpeechRecognitionDelegate?
@@ -19,11 +27,8 @@ class SpeechRecognitionService: NSObject {
     private var lastTranscription = ""
     private var hasFired = false
 
-    /// 最长监听时间（秒），兜底防止无限监听
     private let maxListenDuration: TimeInterval = 30
-    /// 静默时间（秒），停顿超过此时长立即触发匹配
     private let silenceDuration: TimeInterval = 1.5
-    /// 停止词，识别到后立即触发匹配
     private let stopWord = "over"
 
     var isRunning: Bool { audioEngine.isRunning }
@@ -65,14 +70,22 @@ class SpeechRecognitionService: NSObject {
                 if text != self.lastTranscription {
                     self.lastTranscription = text
 
-                    // 检查停止词
+                    // 检查停止词 "over"
                     if text.lowercased().contains(self.stopWord) {
                         let cleaned = text.replacingOccurrences(of: self.stopWord, with: "", options: .caseInsensitive).trimmingCharacters(in: .whitespacesAndNewlines)
+
+                        // 先判断是否是题型切换指令（文字短 + 含题型关键词）
+                        if let newType = self.detectTypeSwitch(text: cleaned) {
+                            self.handleTypeSwitch(type: newType)
+                            return
+                        }
+
+                        // 不是题型切换，正常触发匹配
                         self.fireFinal(text: cleaned.isEmpty ? text : cleaned)
                         return
                     }
 
-                    // 有有效文字变化就重置静默定时器
+                    // 没有"over"，重置静默定时器
                     if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         self.resetSilenceTimer(text: text)
                     }
@@ -99,7 +112,37 @@ class SpeechRecognitionService: NSObject {
         task = nil
     }
 
-    // MARK: - Silence detection (1.5s 静默触发)
+    // MARK: - 题型切换检测
+
+    /// 判断是否是题型切换指令：文字短 + 包含题型关键词
+    private func detectTypeSwitch(text: String) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 题型切换指令通常很短（≤8个字符）
+        guard trimmed.count <= 8 else { return nil }
+
+        for (type, keywords) in typeSwitchKeywords {
+            for keyword in keywords {
+                if trimmed.contains(keyword) {
+                    return type
+                }
+            }
+        }
+        return nil
+    }
+
+    /// 处理题型切换：通知 delegate，不触发题目匹配
+    private func handleTypeSwitch(type: String) {
+        guard !hasFired else { return }
+        hasFired = true
+        silenceTimer?.invalidate()
+        silenceTimer = nil
+        maxListenTimer?.invalidate()
+        maxListenTimer = nil
+        stopListening()
+        delegate?.didSwitchType(type: type)
+    }
+
+    // MARK: - Silence detection
 
     private func resetSilenceTimer(text: String) {
         silenceTimer?.invalidate()
@@ -108,7 +151,7 @@ class SpeechRecognitionService: NSObject {
         }
     }
 
-    // MARK: - Max listen timeout (兜底)
+    // MARK: - Max listen timeout
 
     private func startMaxListenTimer() {
         maxListenTimer?.invalidate()
@@ -130,7 +173,6 @@ class SpeechRecognitionService: NSObject {
     private func fireFinal(text: String) {
         guard !hasFired else { return }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            // 空文字不触发匹配，但也要停止当前轮让 ViewModel 重启
             hasFired = true
             silenceTimer?.invalidate()
             silenceTimer = nil
