@@ -20,6 +20,9 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: List available schemes (debug)
+        run: xcodebuild -project FlashAnswer.xcodeproj -list
+
       - name: Resolve Swift Package dependencies
         run: |
           xcodebuild -resolvePackageDependencies \
@@ -34,7 +37,9 @@ jobs:
             -destination "platform=iOS Simulator,name=iPhone 15,OS=latest" \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
-            | xcpretty || true
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
 
       - name: Archive (unsigned, for AltStore sideloading)
         run: |
@@ -49,15 +54,15 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM=""
 
-      - name: Export .ipa (ad-hoc unsigned)
+      - name: Export .ipa (pack Payload manually)
         run: |
-          mkdir -p "$RUNNER_TEMP/ipa"
-          # Pack the .app from the archive into an .ipa manually (no provisioning needed for AltStore)
-          APP_PATH=$(find "$RUNNER_TEMP/FlashAnswer.xcarchive/Products" -name "*.app" | head -1)
           mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          APP_PATH=$(find "$RUNNER_TEMP/FlashAnswer.xcarchive/Products" -name "*.app" | head -1)
+          echo "Found app at: $APP_PATH"
           cp -r "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/"
           cd "$RUNNER_TEMP/ipa"
           zip -r FlashAnswer.ipa Payload
+          echo "IPA size: $(du -sh FlashAnswer.ipa)"
 
       - name: Upload .ipa artifact
         uses: actions/upload-artifact@v4
