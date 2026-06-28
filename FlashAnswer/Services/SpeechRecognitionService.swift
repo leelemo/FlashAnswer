@@ -33,6 +33,12 @@ class SpeechRecognitionService: NSObject {
 
     var isRunning: Bool { audioEngine.isRunning }
 
+    /// 检查语音识别是否可用（在调用 startListening 前应检查）
+    var isAvailable: Bool {
+        guard let rec = recognizer else { return false }
+        return rec.isAvailable
+    }
+
     func requestPermission(completion: @escaping (Bool) -> Void) {
         SFSpeechRecognizer.requestAuthorization { status in
             DispatchQueue.main.async {
@@ -45,8 +51,19 @@ class SpeechRecognitionService: NSObject {
         stopListening()
         hasFired = false
 
+        // 检查识别器可用性
+        guard let rec = recognizer, rec.isAvailable else {
+            delegate?.didFail(error: NSError(
+                domain: "FlashAnswer",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "语音识别不可用，请检查设置中是否允许语音识别，并确保已下载中文离线语言包（设置 > 通用 > 语言与地区 > 语音）"]
+            ))
+            return
+        }
+
         let request = SFSpeechAudioBufferRecognitionRequest()
-        request.requiresOnDeviceRecognition = true
+        // 不强制设备端识别：系统会优先设备端，不可用时自动走云端
+        // request.requiresOnDeviceRecognition = true
         request.shouldReportPartialResults = true
         request.taskHint = .dictation
         self.request = request
@@ -58,11 +75,16 @@ class SpeechRecognitionService: NSObject {
             self?.request?.append(buffer)
         }
 
-        try? audioEngine.start()
+        do {
+            try audioEngine.start()
+        } catch {
+            delegate?.didFail(error: error)
+            return
+        }
         lastTranscription = ""
         startMaxListenTimer()
 
-        task = recognizer?.recognitionTask(with: request) { [weak self] result, error in
+        task = rec.recognitionTask(with: request) { [weak self] result, error in
             guard let self, !self.hasFired else { return }
 
             if let result {
@@ -114,10 +136,8 @@ class SpeechRecognitionService: NSObject {
 
     // MARK: - 题型切换检测
 
-    /// 判断是否是题型切换指令：文字短 + 包含题型关键词
     private func detectTypeSwitch(text: String) -> String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // 题型切换指令通常很短（≤8个字符）
         guard trimmed.count <= 8 else { return nil }
 
         for (type, keywords) in typeSwitchKeywords {
@@ -130,7 +150,6 @@ class SpeechRecognitionService: NSObject {
         return nil
     }
 
-    /// 处理题型切换：通知 delegate，不触发题目匹配
     private func handleTypeSwitch(type: String) {
         guard !hasFired else { return }
         hasFired = true
