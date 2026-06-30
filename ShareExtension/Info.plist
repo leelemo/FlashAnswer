@@ -22,27 +22,18 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(IPHONEOS_DEPLOYMENT_TARGET)</string>
-	<key>UIDesignatedRequirementIdentifier</key>
-	<string>com.apple.security.no-sandbox</string>
 
 	<!-- Share Extension 配置 -->
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
+			<!-- TRUEPREDICATE 让扩展显示在所有分享场景，代码中过滤图片 -->
 			<key>NSExtensionActivationRule</key>
-			<string>SUBQUERY (
-  extensionItems,
-  $extensionItem,
-  SUBQUERY (
-    $extensionItem.attachments,
-    $attachment,
-    ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.image"
-  ).@count &gt;= 1
-).@count &gt;= 1</string>
+			<string>TRUEPREDICATE</string>
 		</dict>
 		<key>NSExtensionPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
+		<string>ShareViewController</string>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.share-services</string>
 	</dict>
