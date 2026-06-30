@@ -8,8 +8,20 @@ class QuestionBank: ObservableObject {
     private var invertedIndex: [String: Set<Int>] = [:]
 
     private let saveURL: URL = {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return docs.appendingPathComponent("question_bank.json")
+        // 优先使用 App Group 共享容器
+        if let groupURL = SharedStorage.questionBankURL {
+            // 迁移：如果旧路径有数据但新路径没有，从旧路径拷贝
+            let oldURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("question_bank.json")
+            if !FileManager.default.fileExists(atPath: groupURL.path),
+               FileManager.default.fileExists(atPath: oldURL.path) {
+                try? FileManager.default.copyItem(at: oldURL, to: groupURL)
+            }
+            return groupURL
+        }
+        // 降级：无 App Group 时使用旧路径
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("question_bank.json")
     }()
 
     init() {
