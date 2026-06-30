@@ -16,6 +16,7 @@
 		B007 /* AudioSessionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A007; };
 		B008 /* SpeechRecognitionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A008; };
 		B009 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A009; };
+		B010 /* SharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A011; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		A007 /* AudioSessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionService.swift; sourceTree = "<group>"; };
 		A008 /* SpeechRecognitionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionService.swift; sourceTree = "<group>"; };
 		A009 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		A011 /* SharedStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStorage.swift; sourceTree = "<group>"; };
 		A010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		PROD /* FlashAnswer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlashAnswer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -103,6 +105,7 @@
 				A007 /* AudioSessionService.swift */,
 				A008 /* SpeechRecognitionService.swift */,
 				A009 /* NotificationService.swift */,
+				A011 /* SharedStorage.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -184,6 +187,7 @@
 				B007 /* AudioSessionService.swift in Sources */,
 				B008 /* SpeechRecognitionService.swift in Sources */,
 				B009 /* NotificationService.swift in Sources */,
+				B010 /* SharedStorage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
