@@ -520,7 +520,7 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		PKGDEP /* CoreXLSX */ = {
-			isa = XCSwiftPackageDependency;
+			isa = XCSwiftPackageProductDependency;
 			package = PKGREF /* XCRemoteSwiftPackageReference "CoreXLSX" */;
 			productName = CoreXLSX;
 		};
