@@ -17,9 +17,10 @@
 		B008 /* SpeechRecognitionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A008; };
 		B009 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A009; };
 		B010 /* SharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A011; };
-		/* Share Extension Build Files */
-		B101 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101; };
+		/* Broadcast Extension Build Files */
+		B101 /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101; };
 		B102 /* QuestionBank.swift in Sources */ = {isa = PBXBuildFile; fileRef = A102; };
+		B103 /* BroadcastExtension.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = A104; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,11 +36,12 @@
 		A011 /* SharedStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStorage.swift; sourceTree = "<group>"; };
 		A010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		PROD /* FlashAnswer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlashAnswer.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		/* Share Extension File References */
-		A101 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		/* Broadcast Extension File References */
+		A101 /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
 		A102 /* QuestionBank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionBank.swift; sourceTree = "<group>"; };
 		A103 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		PROD_SE /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A104 /* BroadcastExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BroadcastExtension.entitlements; sourceTree = "<group>"; };
+		PROD_BE /* BroadcastExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BroadcastExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,7 +51,7 @@
 			files = ();
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FWKP_SE /* ShareExtension Frameworks */ = {
+		FWKP_BE /* BroadcastExtension Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = ();
@@ -62,7 +64,7 @@
 			isa = PBXGroup;
 			children = (
 				GRPMAIN /* FlashAnswer */,
-				GRPSE /* ShareExtension */,
+				GRPBE /* BroadcastExtension */,
 				GRPPROD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -71,7 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				PROD /* FlashAnswer.app */,
-				PROD_SE /* ShareExtension.appex */,
+				PROD_BE /* BroadcastExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -126,14 +128,15 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		GRPSE /* ShareExtension */ = {
+		GRPBE /* BroadcastExtension */ = {
 			isa = PBXGroup;
 			children = (
-				A101 /* ShareViewController.swift */,
+				A101 /* SampleHandler.swift */,
 				A102 /* QuestionBank.swift */,
 				A103 /* Info.plist */,
+				A104 /* BroadcastExtension.entitlements */,
 			);
-			path = ShareExtension;
+			path = BroadcastExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -157,22 +160,22 @@
 			productReference = PROD /* FlashAnswer.app */;
 			productType = "com.apple.product-type.application";
 		};
-		TGT_SE /* ShareExtension */ = {
+		TGT_BE /* BroadcastExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CFGTGT_SE;
+			buildConfigurationList = CFGTGT_BE;
 			buildPhases = (
-				SRCP_SE /* Sources */,
-				FWKP_SE /* Frameworks */,
-				RESP_SE /* Resources */,
+				SRCP_BE /* Sources */,
+				FWKP_BE /* Frameworks */,
+				RESP_BE /* Resources */,
 			);
 			buildRules = ();
 			dependencies = (
-				DEPP_SE_MAIN /* FlashAnswer */,
+				DEPP_BE_MAIN /* FlashAnswer */,
 			);
-			name = ShareExtension;
-			productName = ShareExtension;
-			productReference = PROD_SE /* ShareExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
+			name = BroadcastExtension;
+			productName = BroadcastExtension;
+			productReference = PROD_BE /* BroadcastExtension.appex */;
+			productType = "com.apple.product-type.broadcast-services-upload";
 		};
 /* End PBXNativeTarget section */
 
@@ -187,7 +190,7 @@
 					TGT = {
 						CreatedOnToolsVersion = 15.0;
 					};
-					TGT_SE = {
+					TGT_BE = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
@@ -206,7 +209,7 @@
 			projectRoot = "";
 			targets = (
 				TGT /* FlashAnswer */,
-				TGT_SE /* ShareExtension */,
+				TGT_BE /* BroadcastExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -218,10 +221,12 @@
 			files = ();
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		RESP_SE /* ShareExtension Resources */ = {
+		RESP_BE /* BroadcastExtension Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = ();
+			files = (
+				B103 /* BroadcastExtension.entitlements in Resources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
@@ -244,11 +249,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		SRCP_SE /* ShareExtension Sources */ = {
+		SRCP_BE /* BroadcastExtension Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B101 /* ShareViewController.swift in Sources */,
+				B101 /* SampleHandler.swift in Sources */,
 				B102 /* QuestionBank.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -256,7 +261,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		DEPP_SE_MAIN /* FlashAnswer */ = {
+		DEPP_BE_MAIN /* FlashAnswer */ = {
 			isa = PBXTargetDependency;
 			target = TGT /* FlashAnswer */;
 		};
@@ -383,14 +388,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = FlashAnswer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.7;
 				PRODUCT_BUNDLE_IDENTIFIER = com.flashanswer.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -406,14 +411,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = FlashAnswer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.7;
 				PRODUCT_BUNDLE_IDENTIFIER = com.flashanswer.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -423,21 +428,22 @@
 			};
 			name = Release;
 		};
-		/* Share Extension Build Configurations */
-		CFGTGT_SE_DBG /* ShareExtension Debug */ = {
+		/* Broadcast Extension Build Configurations */
+		CFGTGT_BE_DBG /* BroadcastExtension Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BroadcastExtension/BroadcastExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ShareExtension/Info.plist;
+				INFOPLIST_FILE = BroadcastExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks");
-				MARKETING_VERSION = 1.6;
-				PRODUCT_BUNDLE_IDENTIFIER = com.flashanswer.app.ShareExtension;
+				MARKETING_VERSION = 1.7;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flashanswer.app.BroadcastExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -446,20 +452,21 @@
 			};
 			name = Debug;
 		};
-		CFGTGT_SE_REL /* ShareExtension Release */ = {
+		CFGTGT_BE_REL /* BroadcastExtension Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BroadcastExtension/BroadcastExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ShareExtension/Info.plist;
+				INFOPLIST_FILE = BroadcastExtension/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks");
-				MARKETING_VERSION = 1.6;
-				PRODUCT_BUNDLE_IDENTIFIER = com.flashanswer.app.ShareExtension;
+				MARKETING_VERSION = 1.7;
+				PRODUCT_BUNDLE_IDENTIFIER = com.flashanswer.app.BroadcastExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -489,11 +496,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CFGTGT_SE /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
+		CFGTGT_BE /* Build configuration list for PBXNativeTarget "BroadcastExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				CFGTGT_SE_DBG /* Debug */,
-				CFGTGT_SE_REL /* Release */,
+				CFGTGT_BE_DBG /* Debug */,
+				CFGTGT_BE_REL /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -513,7 +520,7 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		PKGDEP /* CoreXLSX */ = {
-			isa = XCSwiftPackageProductDependency;
+			isa = XCSwiftPackageDependency;
 			package = PKGREF /* XCRemoteSwiftPackageReference "CoreXLSX" */;
 			productName = CoreXLSX;
 		};

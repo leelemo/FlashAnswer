@@ -1,6 +1,12 @@
 import Foundation
 import Combine
 
+/// 识别模式
+enum RecognitionMode: String, CaseIterable {
+    case voice = "语音识别"
+    case screen = "录屏识别"
+}
+
 enum AppState {
     case idle
     case listening
@@ -14,6 +20,15 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     @Published var isListening = false
     @Published var statusText = "就绪"
     @Published var permissionsGranted = false
+
+    /// 当前识别模式
+    @Published var mode: RecognitionMode = .voice {
+        didSet {
+            if isListening {
+                stopListening()
+            }
+        }
+    }
 
     /// 当前题型，默认单选题，跨监听轮次保持
     @Published var currentType = "单选题"
@@ -71,7 +86,7 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
         state = .idle
     }
 
-    // MARK: - Listening control
+    // MARK: - Listening control (语音模式)
 
     func toggleListening() {
         if isListening {

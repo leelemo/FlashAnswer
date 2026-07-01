@@ -23,19 +23,17 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>$(IPHONEOS_DEPLOYMENT_TARGET)</string>
 
-	<!-- Share Extension 配置 -->
+	<!-- Broadcast Upload Extension 配置 -->
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
-			<!-- TRUEPREDICATE 让扩展显示在所有分享场景，代码中过滤图片 -->
-			<key>NSExtensionActivationRule</key>
-			<string>TRUEPREDICATE</string>
+			<!-- 支持屏幕录制广播 -->
 		</dict>
 		<key>NSExtensionPrincipalClass</key>
-		<string>ShareViewController</string>
+		<string>SampleHandler</string>
 		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.share-services</string>
+		<string>com.apple.broadcast-services-upload</string>
 	</dict>
 </dict>
 </plist>
