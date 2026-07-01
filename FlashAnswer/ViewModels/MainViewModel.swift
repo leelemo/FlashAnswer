@@ -39,7 +39,7 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     private var restartTimer: Timer?
 
     /// 题型切换关键词
-    private static let typeKeywords: [(display: String, keywords: [String])] = [
+    static let typeKeywords: [(display: String, keywords: [String])] = [
         ("单选题", ["单选", "单选题"]),
         ("多选题", ["多选", "多选题"]),
         ("判断题", ["判断", "判断题"]),
