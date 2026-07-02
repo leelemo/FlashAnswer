@@ -169,9 +169,7 @@
 				RESP_BE /* Resources */,
 			);
 			buildRules = ();
-			dependencies = (
-				DEPP_BE_MAIN /* FlashAnswer */,
-			);
+			dependencies = ();
 			name = BroadcastExtension;
 			productName = BroadcastExtension;
 			productReference = PROD_BE /* BroadcastExtension.appex */;
@@ -259,13 +257,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		DEPP_BE_MAIN /* FlashAnswer */ = {
-			isa = PBXTargetDependency;
-			target = TGT /* FlashAnswer */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		CFGDBG /* Debug */ = {
