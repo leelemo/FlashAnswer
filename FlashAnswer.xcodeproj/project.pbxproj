@@ -175,7 +175,7 @@
 			name = BroadcastExtension;
 			productName = BroadcastExtension;
 			productReference = PROD_BE /* BroadcastExtension.appex */;
-			productType = "com.apple.product-type.broadcast-services-upload";
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
