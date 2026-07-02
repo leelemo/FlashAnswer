@@ -43,7 +43,20 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM=""
 
-      - name: Archive (unsigned, for AltStore sideloading)
+      - name: Build BroadcastExtension (Release)
+        run: |
+          xcodebuild build \
+            -project FlashAnswer.xcodeproj \
+            -target BroadcastExtension \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Archive FlashAnswer (unsigned, for AltStore sideloading)
         run: |
           xcodebuild archive \
             -project FlashAnswer.xcodeproj \
@@ -56,13 +69,27 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM=""
 
-      - name: Export .ipa (pack Payload manually)
+      - name: Export .ipa (embed BroadcastExtension + pack Payload)
         run: |
           mkdir -p "$RUNNER_TEMP/ipa/Payload"
           APP_PATH=$(find "$RUNNER_TEMP/FlashAnswer.xcarchive/Products" -name "*.app" | head -1)
           echo "Found app at: $APP_PATH"
           cp -r "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/"
+
+          # 嵌入 BroadcastExtension
+          EXTENSION_PATH=$(find "$RUNNER_TEMP/DerivedData" -name "BroadcastExtension.appex" | head -1)
+          if [ -n "$EXTENSION_PATH" ]; then
+            echo "Found extension at: $EXTENSION_PATH"
+            mkdir -p "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns"
+            cp -r "$EXTENSION_PATH" "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns/"
+            echo "BroadcastExtension embedded successfully"
+          else
+            echo "WARNING: BroadcastExtension.appex not found - continuing without it"
+          fi
+
           cd "$RUNNER_TEMP/ipa"
+          # 显示 app bundle 结构（验证 extension 已嵌入）
+          find Payload -name "*.appex" -o -name "*.app" 2>/dev/null | head -20
           zip -r FlashAnswer.ipa Payload
           echo "IPA size: $(du -sh FlashAnswer.ipa)"
 
