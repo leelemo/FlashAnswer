@@ -70,12 +70,21 @@ jobs:
 
       - name: Export .ipa (embed BroadcastExtension + pack Payload)
         run: |
+          # 调试：列出 DerivedData 中所有 .appex
+          echo "=== 搜索 BroadcastExtension.appex ==="
+          find ~/Library/Developer/Xcode/DerivedData -name "BroadcastExtension.appex" 2>/dev/null || echo "NOT FOUND in DerivedData"
+          echo "=== 搜索所有 .appex ==="
+          find ~/Library/Developer/Xcode/DerivedData -name "*.appex" 2>/dev/null | head -10 || echo "NO .appex files found"
+          echo "=== DerivedData 目录列表 ==="
+          ls ~/Library/Developer/Xcode/DerivedData/ 2>/dev/null | head -10 || echo "DerivedData empty"
+          echo "================================"
+
           mkdir -p "$RUNNER_TEMP/ipa/Payload"
           APP_PATH=$(find "$RUNNER_TEMP/FlashAnswer.xcarchive/Products" -name "*.app" | head -1)
           echo "Found app at: $APP_PATH"
           cp -r "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/"
 
-          # 嵌入 BroadcastExtension（从默认 DerivedData 查找）
+          # 嵌入 BroadcastExtension
           EXTENSION_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "BroadcastExtension.appex" | head -1)
           if [ -n "$EXTENSION_PATH" ]; then
             echo "Found extension at: $EXTENSION_PATH"
@@ -87,7 +96,6 @@ jobs:
           fi
 
           cd "$RUNNER_TEMP/ipa"
-          # 显示 app bundle 结构（验证 extension 已嵌入）
           find Payload -name "*.appex" -o -name "*.app" 2>/dev/null | head -20
           zip -r FlashAnswer.ipa Payload
           echo "IPA size: $(du -sh FlashAnswer.ipa)"
