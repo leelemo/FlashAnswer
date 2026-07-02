@@ -45,7 +45,7 @@ class QuestionBank {
         let pb = toPinyin(b).prefix(20)
         let maxLen = max(pa.count, pb.count)
         guard maxLen > 0 else { return 1.0 }
-        let distance = levenshtein(pa, pb)
+        let distance = levenshtein(String(pa), String(pb))
         return 1.0 - Double(min(distance, maxLen)) / Double(maxLen)
     }
 
@@ -68,7 +68,7 @@ class QuestionBank {
 
     // MARK: - 倒排索引
 
-    private var questions: [Question] = []
+    private(set) var questions: [Question] = []
     private var pinyinIndex: [String: [Int]] = [:]  // pinyin bigram -> question indices
 
     // MARK: - 加载（从 App Group 共享容器）
@@ -123,7 +123,7 @@ class QuestionBank {
         for q in topCandidates {
             let sim = max(
                 fuzzyMatch(text1: cleaned, text2: q.text),
-                phoneticSim(cleaned, q.text)
+                Self.phoneticSim(cleaned, q.text)
             )
             if sim >= 0.6 {
                 results.append(MatchResult(question: q, similarity: sim))

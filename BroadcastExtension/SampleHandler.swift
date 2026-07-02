@@ -88,7 +88,7 @@ class SampleHandler: RPBroadcastSampleHandler {
         sendMatchNotifications(results: results)
     }
 
-    private func sendMatchNotifications(results: [QuestionBank.MatchResult]) {
+    private func sendMatchNotifications(results: [MatchResult]) {
         for (i, result) in results.enumerated() {
             let q = result.question
             let content = UNMutableNotificationContent()
