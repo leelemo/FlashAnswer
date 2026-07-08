@@ -103,10 +103,16 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
         statusTimer?.invalidate()
         statusTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             guard let self else { return }
+            // 先检测 App Group 是否可用：免费证书侧载下通常不可用，导致共享通道断开
+            let agAvailable = SharedStorage.containerURL != nil
             guard let dict = SharedStorage.loadExtensionStatus(),
                   let lastActive = dict["lastActive"] as? String else {
                 DispatchQueue.main.async {
-                    self.extensionStatusText = "未检测到录屏扩展活动（请先开始一次录屏）"
+                    if !agAvailable {
+                        self.extensionStatusText = "⚠️ App Group 共享不可用\n（免费证书侧载常见，扩展与主App无法通信）\n→ 需付费开发者证书，或回复「走方案B」让扩展自带题库"
+                    } else {
+                        self.extensionStatusText = "未检测到录屏扩展活动\n（请先在控制中心开始一次录屏）"
+                    }
                 }
                 return
             }

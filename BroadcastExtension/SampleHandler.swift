@@ -191,12 +191,19 @@ class SampleHandler: RPBroadcastSampleHandler {
         // 录屏开始，请求通知权限
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         bank.load()
+
+        // 检测 App Group 是否可用（免费证书侧载下通常不可用）
+        let agAvailable = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: "group.com.leelemo.flashanswer"
+        ) != nil
         updateStatus()  // 记录启动时间，供主 App 确认扩展已运行
 
         // 启动即时反馈：让用户知道录屏识别已运行
         let start = UNMutableNotificationContent()
         start.title = "▶️ 录屏识别已启动"
-        start.body = "每 10 秒反馈一次；识别到题目会立即推送答案。"
+        start.body = agAvailable
+            ? "每 10 秒反馈一次；识别到题目会立即推送答案。"
+            : "已启动，但 App Group 共享不可用（免费证书侧载常见），题库可能无法读取。如需扩展自带题库请反馈。"
         start.sound = nil
         UNUserNotificationCenter.current().add(UNNotificationRequest(
             identifier: "FlashAnswer-Start-\(UUID().uuidString)",
