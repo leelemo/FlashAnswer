@@ -3,6 +3,7 @@ import Vision
 import UserNotifications
 import CoreMedia
 import Dispatch
+import Foundation
 
 /// Broadcast Upload Extension 入口：接收录屏帧 → OCR → 匹配 → 通知
 class SampleHandler: RPBroadcastSampleHandler {
@@ -63,6 +64,7 @@ class SampleHandler: RPBroadcastSampleHandler {
                 .joined(separator: "\n")
 
             if !recognizedText.isEmpty {
+                self.updateStatus(lastText: recognizedText)
                 self.handleOCRResult(text: recognizedText)
             }
         }
@@ -89,6 +91,11 @@ class SampleHandler: RPBroadcastSampleHandler {
         // 标记本周期已找到答案，避免 10 秒反馈误报“搜不到答案”
         foundSinceLastFeedback = true
 
+        // 记录最近一次匹配到的结果（供主 App 状态页读取）
+        if let top = results.first {
+            updateStatus(lastMatch: "【\(top.question.type)】答案：\(top.question.answer)")
+        }
+
         // 避免短时间内重复发送匹配通知
         guard !hasSentMatch else { return }
         hasSentMatch = true
@@ -113,6 +120,27 @@ class SampleHandler: RPBroadcastSampleHandler {
                 trigger: trigger
             )
             UNUserNotificationCenter.current().add(request)
+        }
+    }
+
+    // MARK: - 状态文件（供主 App 读取扩展是否活跃）
+
+    private func updateStatus(lastText: String? = nil, lastMatch: String? = nil) {
+        let fm = FileManager.default
+        guard let container = fm.containerURL(forSecurityApplicationGroupIdentifier: "group.com.leelemo.flashanswer") else { return }
+        let url = container.appendingPathComponent("flashanswer_status.json")
+        let now = ISO8601DateFormatter().string(from: Date())
+        var dict: [String: Any] = [:]
+        if let data = try? Data(contentsOf: url),
+           let existing = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            dict = existing
+        }
+        dict["lastActive"] = now
+        if let lastText { dict["lastText"] = String(lastText.prefix(120)) }
+        if let lastMatch { dict["lastMatch"] = lastMatch }
+        if dict["startedAt"] == nil { dict["startedAt"] = now }
+        if let data = try? JSONSerialization.data(withJSONObject: dict) {
+            try? data.write(to: url)
         }
     }
 
@@ -163,6 +191,7 @@ class SampleHandler: RPBroadcastSampleHandler {
         // 录屏开始，请求通知权限
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         bank.load()
+        updateStatus()  // 记录启动时间，供主 App 确认扩展已运行
 
         // 启动即时反馈：让用户知道录屏识别已运行
         let start = UNMutableNotificationContent()

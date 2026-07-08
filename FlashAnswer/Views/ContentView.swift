@@ -20,6 +20,7 @@ struct ContentView: View {
                 // 录屏模式：使用说明
                 if vm.mode == .screen {
                     screenHelpCard
+                    extensionStatusCard
                 }
 
                 Divider()
@@ -48,6 +49,10 @@ struct ContentView: View {
 
                 // 操作按钮
                 actionButtons
+
+                Text("版本 \(vm.appVersion)")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
             .padding(.vertical, 24)
             .navigationTitle("FlashAnswer")
@@ -68,7 +73,13 @@ struct ContentView: View {
             } message: {
                 Text("确定要清空所有题库吗？此操作不可撤销。")
             }
-            .onAppear { vm.requestPermissions() }
+            .onAppear {
+                vm.requestPermissions()
+                vm.startStatusPolling()
+            }
+            .onDisappear {
+                vm.stopStatusPolling()
+            }
         }
     }
 
@@ -129,6 +140,26 @@ struct ContentView: View {
             .foregroundStyle(.secondary)
         }
         .padding(20)
+        .frame(maxWidth: .infinity)
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal)
+    }
+
+    // MARK: - 录屏扩展状态
+
+    @ViewBuilder
+    private var extensionStatusCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("录屏扩展状态", systemImage: "waveform.badge.magnifyingglass")
+                .font(.headline)
+            Text(vm.extensionStatusText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .textSelection(.enabled)
+        }
+        .padding(16)
         .frame(maxWidth: .infinity)
         .background(Color(.systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: 16))

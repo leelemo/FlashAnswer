@@ -21,6 +21,10 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
     @Published var statusText = "就绪"
     @Published var permissionsGranted = false
 
+    /// 录屏扩展状态（由扩展写入 App Group，主 App 轮询读取）
+    @Published var extensionStatusText = "未检测到录屏扩展活动（请先开始一次录屏）"
+    private var statusTimer: Timer?
+
     /// 当前识别模式
     @Published var mode: RecognitionMode = .voice {
         didSet {
@@ -32,6 +36,13 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
 
     /// 当前题型，默认单选题，跨监听轮次保持
     @Published var currentType = "单选题"
+
+    /// 显示用版本号，含构建号（用于确认是否装上了最新构建）
+    var appVersion: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        return "\(v) (build \(b))"
+    }
 
     let bank = QuestionBank()
     private let speech = SpeechRecognitionService()
@@ -84,6 +95,33 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
         bank.clearAll()
         statusText = "题库已清空"
         state = .idle
+    }
+
+    // MARK: - 录屏扩展状态轮询
+
+    func startStatusPolling() {
+        statusTimer?.invalidate()
+        statusTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            guard let dict = SharedStorage.loadExtensionStatus(),
+                  let lastActive = dict["lastActive"] as? String else {
+                DispatchQueue.main.async {
+                    self.extensionStatusText = "未检测到录屏扩展活动（请先开始一次录屏）"
+                }
+                return
+            }
+            let lastText = (dict["lastText"] as? String) ?? "（无）"
+            let lastMatch = (dict["lastMatch"] as? String) ?? "（未匹配）"
+            let started = (dict["startedAt"] as? String) ?? lastActive
+            DispatchQueue.main.async {
+                self.extensionStatusText = "启动于：\(started)\n最后活跃：\(lastActive)\n识别文本：\(lastText)\n最近匹配：\(lastMatch)"
+            }
+        }
+    }
+
+    func stopStatusPolling() {
+        statusTimer?.invalidate()
+        statusTimer = nil
     }
 
     // MARK: - Listening control (语音模式)

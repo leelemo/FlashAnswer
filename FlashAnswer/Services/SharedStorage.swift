@@ -14,4 +14,18 @@ enum SharedStorage {
     static var questionBankURL: URL? {
         containerURL?.appendingPathComponent("question_bank.json")
     }
+
+    static var extensionStatusURL: URL? {
+        containerURL?.appendingPathComponent("flashanswer_status.json")
+    }
+
+    /// 读取录屏扩展写入的状态（最后活跃时间 / 识别文本 / 最近匹配）
+    static func loadExtensionStatus() -> [String: Any]? {
+        guard let url = extensionStatusURL,
+              let data = try? Data(contentsOf: url),
+              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        return dict
+    }
 }

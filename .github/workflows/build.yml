@@ -19,6 +19,9 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
           xcodebuild -version
 
+      - name: Set build number (每次构建自增，确保重装覆盖旧版)
+        run: echo "BUILD_NUMBER=$((1000 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
+
       - name: Show available SDKs
         run: xcodebuild -showsdks
 
@@ -50,6 +53,7 @@ jobs:
             -target BroadcastExtension \
             -configuration Release \
             -destination "generic/platform=iOS" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
@@ -63,6 +67,7 @@ jobs:
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath "$RUNNER_TEMP/FlashAnswer.xcarchive" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
