@@ -121,6 +121,13 @@ jobs:
             cp -rL "$EXTENSION_PATH" "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns/"
             echo "BroadcastExtension embedded successfully"
             ls -la "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns/"
+            # 方案B：把仓库内置题库复制进扩展包（免费证书侧载免 App Group 共享即可查题）
+            if [ -f "BroadcastExtension/question_bank.json" ]; then
+              cp "BroadcastExtension/question_bank.json" "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns/BroadcastExtension.appex/question_bank.json"
+              echo "已内置题库到扩展包 ($(wc -c < BroadcastExtension/question_bank.json) bytes)"
+            else
+              echo "提示：仓库无 BroadcastExtension/question_bank.json，扩展将无内置题库"
+            fi
           else
             echo "WARNING: BroadcastExtension.appex not found anywhere!"
             echo "BroadcastExtension 未嵌入 IPA — 需要先修复编译步骤"

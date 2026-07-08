@@ -71,19 +71,25 @@ class QuestionBank {
     private(set) var questions: [Question] = []
     private var pinyinIndex: [String: [Int]] = [:]  // pinyin bigram -> question indices
 
-    // MARK: - 加载（从 App Group 共享容器）
+    // MARK: - 加载（三级回退：App Group → 扩展内置题库 → 扩展 Documents）
 
     func load() {
-        let fm = FileManager.default
-        let appGroupID = "group.com.leelemo.flashanswer"
-        guard let container = fm.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else {
-            // fallback to documents
-            let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first!
-            load(from: docs.appendingPathComponent("question_bank.json"))
-            return
+        // 1. 优先 App Group（付费证书，可运行时更新题库）
+        if let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.leelemo.flashanswer") {
+            let url = container.appendingPathComponent("question_bank.json")
+            if FileManager.default.fileExists(atPath: url.path) {
+                load(from: url)
+                if !questions.isEmpty { return }
+            }
         }
-        let url = container.appendingPathComponent("question_bank.json")
-        load(from: url)
+        // 2. 回退：扩展 bundle 内置题库（方案B，打包进 .appex，免费侧载可用）
+        if let bundled = Bundle.main.url(forResource: "question_bank", withExtension: "json") {
+            load(from: bundled)
+            if !questions.isEmpty { return }
+        }
+        // 3. 最后回退：扩展自己的 Documents
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        load(from: docs.appendingPathComponent("question_bank.json"))
     }
 
     private func load(from url: URL) {
