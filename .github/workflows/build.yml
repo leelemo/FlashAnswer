@@ -91,7 +91,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/ipa/Payload"
           APP_PATH=$(find "$RUNNER_TEMP/FlashAnswer.xcarchive/Products" -name "*.app" | head -1)
           echo "Found app at: $APP_PATH"
-          cp -r "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/"
+          # -L 解引用符号链接，避免 IPA 内残留符号链接导致爱思助手“压缩ipa出错”
+          cp -rL "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/"
 
           echo "=== 3. 查找并嵌入 BroadcastExtension ==="
           # 优先从 TARGET_BUILD_DIR 找
@@ -111,7 +112,8 @@ jobs:
           if [ -n "$EXTENSION_PATH" ]; then
             echo "Found extension at: $EXTENSION_PATH"
             mkdir -p "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns"
-            cp -r "$EXTENSION_PATH" "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns/"
+            # -L 同样解引用符号链接
+            cp -rL "$EXTENSION_PATH" "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns/"
             echo "BroadcastExtension embedded successfully"
             ls -la "$RUNNER_TEMP/ipa/Payload/FlashAnswer.app/PlugIns/"
           else
@@ -119,11 +121,24 @@ jobs:
             echo "BroadcastExtension 未嵌入 IPA — 需要先修复编译步骤"
           fi
 
-          echo "=== 4. 打包 IPA ==="
+          echo "=== 4. 打包 IPA（解引用符号链接，兼容爱思助手签名）==="
           cd "$RUNNER_TEMP/ipa"
+          echo "--- 列出 Payload 内容 ---"
           find Payload -name "*.appex" -o -name "*.app" 2>/dev/null | head -20
-          zip -r FlashAnswer.ipa Payload
+          echo "--- 检查是否仍有符号链接（爱思助手无法处理符号链接）---"
+          SYMLINKS=$(find Payload -type l)
+          if [ -n "$SYMLINKS" ]; then
+            echo "警告：仍发现符号链接："
+            echo "$SYMLINKS"
+          else
+            echo "OK：Payload 内无符号链接。"
+          fi
+          # 用 ditto 打包：解引用符号链接、生成 Windows/爱思 兼容的 zip
+          rm -f FlashAnswer.ipa
+          ditto -c -k --sequesterRsrc --keepParent Payload FlashAnswer.ipa
           echo "IPA size: $(du -sh FlashAnswer.ipa)"
+          echo "--- 校验 IPA 结构 ---"
+          unzip -l FlashAnswer.ipa | grep -E "PlugIns/BroadcastExtension.appex|Payload/FlashAnswer.app/$" | head -5
 
       - name: Upload .ipa artifact
         uses: actions/upload-artifact@v4
