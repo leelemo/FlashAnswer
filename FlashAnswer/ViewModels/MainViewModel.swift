@@ -109,7 +109,7 @@ class MainViewModel: NSObject, ObservableObject, SpeechRecognitionDelegate {
                   let lastActive = dict["lastActive"] as? String else {
                 DispatchQueue.main.async {
                     if !agAvailable {
-                        self.extensionStatusText = "⚠️ App Group 共享不可用\n（免费证书侧载常见，扩展与主App无法通信）\n→ 需付费开发者证书，或回复「走方案B」让扩展自带题库"
+                        self.extensionStatusText = "⚠️ App Group 共享不可用\n（免费证书侧载常见，扩展与主App无法通信）\n→ 请通过手机通知查看识别结果，本卡片在免费证书下不可用"
                     } else {
                         self.extensionStatusText = "未检测到录屏扩展活动\n（请先在控制中心开始一次录屏）"
                     }
